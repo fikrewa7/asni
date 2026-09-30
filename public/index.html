@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-900 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asni Guest House - Jimma Ferenj Arada</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        ethiopia: {
+                            green: '#009A44',
+                            yellow: '#FED100',
+                            red: '#E21118',
+                            gold: '#D4AF37',
+                            dark: '#0F172A'
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom Styles -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card {
+            background: rgba(51, 65, 85, 0.4);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+        ::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.5); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.8); }
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white !important; color: black !important; }
+            .glass-panel, .glass-card { background: white !important; border: 1px solid #ccc !important; color: black !important; }
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col overflow-hidden text-slate-100">
+
+    <!-- Top Bar Header -->
+    <header class="no-print bg-slate-900/90 border-b border-slate-800 px-4 py-3 flex items-center justify-between z-20">
+        <div class="flex items-center gap-3">
+            <button id="mobileMenuBtn" class="md:hidden text-slate-400 hover:text-white p-2 text-xl">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 via-yellow-500 to-emerald-600 flex items-center justify-center font-bold text-slate-950 text-xl shadow-lg shadow-amber-500/20">
+                    A
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">Asni Guest House</h1>
+                    <p class="text-xs text-slate-400 flex items-center gap-1">
+                        <i class="fa-solid fa-location-dot text-emerald-500"></i> Jimma, Ferenj Arada, Ethiopia
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Role Switcher & User Info -->
+        <div class="flex items-center gap-4">
+            <div class="hidden sm:flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/60">
+                <i class="fa-solid fa-user-shield text-amber-400 text-sm"></i>
+                <span class="text-xs font-medium text-slate-400">Role:</span>
+                <select id="roleSelect" class="bg-transparent text-sm font-semibold text-slate-200 outline-none cursor-pointer">
+                    <option value="Admin" class="bg-slate-800">Admin (Abebe Demissie)</option>
+                    <option value="Receptionist" class="bg-slate-800">Receptionist (Chaltu Gemechu)</option>
+                    <option value="Guest" class="bg-slate-800">Guest Perspective</option>
+                </select>
+            </div>
+
+            <!-- Toast / Sync Indicator -->
+            <div id="syncBadge" class="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs bg-emerald-950/80 text-emerald-400 border border-emerald-800/50">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span id="syncStatusText">Engine Ready</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="flex-1 flex overflow-hidden relative">
+
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="no-print absolute md:relative z-30 w-64 h-full bg-slate-900/95 border-r border-slate-800/80 flex flex-col justify-between transition-transform duration-300 -translate-x-full md:translate-x-0">
+            <div class="p-4 space-y-1">
+                <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Navigation</div>
+                <nav class="space-y-1" id="navContainer">
+                    <button data-tab="dashboard" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-all active">
+                        <i class="fa-solid fa-chart-pie w-5 text-center text-amber-400"></i> Dashboard & KPIs
+                    </button>
+                    <button data-tab="frontdesk" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-all">
+                        <i class="fa-solid fa-bed w-5 text-center text-emerald-400"></i> Front Desk & Rooms
+                    </button>
+                    <button data-tab="dining" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-all">
+                        <i class="fa-solid fa-utensils w-5 text-center text-rose-400"></i> Restaurant & Bar
+                    </button>
+                    <button data-tab="reports" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-all font-admin-only">
+                        <i class="fa-solid fa-file-invoice-dollar w-5 text-center text-sky-400"></i> Reports & Financials
+                    </button>
+                    <button data-tab="sqlconsole" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-all font-admin-only">
+                        <i class="fa-solid fa-database w-5 text-center text-purple-400"></i> Cloudflare D1 Console
+                    </button>
+                    <button data-tab="promotions" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-all">
+                        <i class="fa-solid fa-bullhorn w-5 text-center text-yellow-400"></i> Jimma Specials
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Sidebar Footer / Currency Indicator -->
+            <div class="p-4 border-t border-slate-800/80 bg-slate-950/40">
+                <div class="flex items-center justify-between text-xs text-slate-400">
+                    <span>Currency Standard:</span>
+                    <span class="font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-500/20">ETB (Birr)</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Content Body Area -->
+        <main class="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-950/40 space-y-6" id="mainContent">
+
+            <!-- TAB 1: DASHBOARD & KPIS -->
+            <section id="tab-dashboard" class="tab-page space-y-6">
+                <!-- Promo Header Banner -->
+                <div class="glass-panel rounded-2xl p-6 bg-gradient-to-r from-amber-950/40 via-slate-900 to-emerald-950/30 relative overflow-hidden">
+                    <div class="relative z-10 space-y-2">
+                        <span class="px-3 py-1 bg-amber-500/20 text-amber-300 text-xs font-semibold rounded-full border border-amber-500/30 uppercase tracking-wider">Jimma Ferenj Arada Branch</span>
+                        <h2 class="text-2xl md:text-3xl font-bold text-white">Welcome to Asni Guest House</h2>
+                        <p class="text-slate-300 text-sm max-w-2xl">
+                            Premier Ethiopian hospitality, authentic Jimma coffee, and luxurious suites. Today's live operations overview and ETB revenue metrics.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- KPI Metric Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="glass-panel p-5 rounded-2xl border-l-4 border-emerald-500 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-slate-400 font-medium uppercase">Total Revenue (Today)</p>
+                            <h3 class="text-2xl font-bold text-white mt-1" id="kpiRevenue">0 ETB</h3>
+                            <p class="text-xs text-emerald-400 mt-1"><i class="fa-solid fa-arrow-up"></i> Room & Restaurant sales</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-money-bill-wave"></i>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-5 rounded-2xl border-l-4 border-amber-500 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-slate-400 font-medium uppercase">Occupancy Rate</p>
+                            <h3 class="text-2xl font-bold text-white mt-1" id="kpiOccupancy">0%</h3>
+                            <p class="text-xs text-amber-400 mt-1" id="kpiOccupancySub">0 / 8 Rooms occupied</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-bed"></i>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-5 rounded-2xl border-l-4 border-sky-500 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-slate-400 font-medium uppercase">Active Guests</p>
+                            <h3 class="text-2xl font-bold text-white mt-1" id="kpiGuests">0</h3>
+                            <p class="text-xs text-sky-400 mt-1">Checked-in currently</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-5 rounded-2xl border-l-4 border-rose-500 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-slate-400 font-medium uppercase">Dining Orders Today</p>
+                            <h3 class="text-2xl font-bold text-white mt-1" id="kpiOrders">0</h3>
+                            <p class="text-xs text-rose-400 mt-1" id="kpiDiningRevenue">0 ETB dining</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-bowl-food"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="glass-panel p-5 rounded-2xl lg:col-span-2">
+                        <h3 class="font-bold text-slate-200 text-lg mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-line text-emerald-400"></i> Revenue Analytics (ETB)
+                        </h3>
+                        <div class="h-64 relative">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="glass-panel p-5 rounded-2xl">
+                        <h3 class="font-bold text-slate-200 text-lg mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-pie text-amber-400"></i> Room Category Distribution
+                        </h3>
+                        <div class="h-64 relative flex items-center justify-center">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: FRONT DESK & ROOM MATRIX -->
+            <section id="tab-frontdesk" class="tab-page space-y-6 hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Front Desk & Room Grid</h2>
+                        <p class="text-xs text-slate-400">Manage check-ins, guest reservations, and room cleaning statuses.</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <select id="roomFilter" class="bg-slate-800 text-slate-200 text-sm px-3 py-2 rounded-xl border border-slate-700 outline-none">
+                            <option value="ALL">All Room Statuses</option>
+                            <option value="Available">Available Only</option>
+                            <option value="Occupied">Occupied Only</option>
+                            <option value="Cleaning">Cleaning / Maintenance</option>
+                        </select>
+                        <button id="btnNewCheckin" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-2 rounded-xl text-sm transition-all flex items-center gap-2">
+                            <i class="fa-solid fa-user-plus"></i> New Check-in
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Room Grid Cards -->
+                <div id="roomGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Dynamic Javascript rendering -->
+                </div>
+
+                <!-- Active Bookings Table -->
+                <div class="glass-panel rounded-2xl p-5 space-y-4">
+                    <h3 class="font-bold text-lg text-slate-200 flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-emerald-400"></i> Active Reservations & Guest Log
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-slate-300">
+                            <thead class="text-xs uppercase bg-slate-800/60 text-slate-400">
+                                <tr>
+                                    <th class="px-4 py-3 rounded-l-lg">Guest Name</th>
+                                    <th class="px-4 py-3">Room</th>
+                                    <th class="px-4 py-3">Check-in</th>
+                                    <th class="px-4 py-3">Check-out</th>
+                                    <th class="px-4 py-3">Status</th>
+                                    <th class="px-4 py-3">Total (ETB)</th>
+                                    <th class="px-4 py-3 rounded-r-lg text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bookingsTableBody" class="divide-y divide-slate-800">
+                                <!-- Dynamic JS fill -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: RESTAURANT & DINING -->
+            <section id="tab-dining" class="tab-page space-y-6 hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Jimma Ferenj Arada Kitchen & Bar</h2>
+                        <p class="text-xs text-slate-400">Authentic Ethiopian dishes, fresh juices, and specialty Jimma coffee.</p>
+                    </div>
+                    <button id="btnViewCart" class="bg-rose-500 hover:bg-rose-600 text-white font-bold px-4 py-2 rounded-xl text-sm transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-cart-shopping"></i> View Active Order (<span id="cartCount">0</span>)
+                    </button>
+                </div>
+
+                <!-- Tables & Menu Split Layout -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Dining Tables Layout -->
+                    <div class="glass-panel p-5 rounded-2xl space-y-4">
+                        <h3 class="font-bold text-slate-200 text-base flex items-center gap-2">
+                            <i class="fa-solid fa-chair text-amber-400"></i> Dining Table Map
+                        </h3>
+                        <div id="diningTablesGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <!-- Dynamic Table buttons -->
+                        </div>
+                    </div>
+
+                    <!-- Menu Catalog -->
+                    <div class="glass-panel p-5 rounded-2xl lg:col-span-2 space-y-4">
+                        <div class="flex items-center justify-between flex-wrap gap-2">
+                            <h3 class="font-bold text-slate-200 text-base flex items-center gap-2">
+                                <i class="fa-solid fa-utensils text-rose-400"></i> Cuisine & Beverage Catalog
+                            </h3>
+                            <div class="flex gap-2">
+                                <button class="menu-cat-btn px-3 py-1 text-xs rounded-lg bg-amber-500 text-slate-950 font-bold active" data-category="ALL">All</button>
+                                <button class="menu-cat-btn px-3 py-1 text-xs rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700" data-category="Ethiopian">Traditional</button>
+                                <button class="menu-cat-btn px-3 py-1 text-xs rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700" data-category="Beverage">Coffee & Drinks</button>
+                                <button class="menu-cat-btn px-3 py-1 text-xs rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700" data-category="International">International</button>
+                            </div>
+                        </div>
+
+                        <div id="menuCatalogGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- Dynamic Menu Cards -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: REPORTS & FINANCIALS -->
+            <section id="tab-reports" class="tab-page space-y-6 hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Financial Ledger & Invoicing</h2>
+                        <p class="text-xs text-slate-400">Transaction history, receipt generation, and ledger records in ETB.</p>
+                    </div>
+                    <button id="btnExportCSV" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-sm transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-file-csv"></i> Export Transactions (CSV)
+                    </button>
+                </div>
+
+                <!-- Ledger Table -->
+                <div class="glass-panel rounded-2xl p-5 space-y-4">
+                    <h3 class="font-bold text-lg text-slate-200 flex items-center gap-2">
+                        <i class="fa-solid fa-receipt text-sky-400"></i> General Financial Ledger
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-slate-300">
+                            <thead class="text-xs uppercase bg-slate-800/60 text-slate-400">
+                                <tr>
+                                    <th class="px-4 py-3 rounded-l-lg">ID</th>
+                                    <th class="px-4 py-3">Date</th>
+                                    <th class="px-4 py-3">Type</th>
+                                    <th class="px-4 py-3">Description</th>
+                                    <th class="px-4 py-3">Payer / Guest</th>
+                                    <th class="px-4 py-3">Amount (ETB)</th>
+                                    <th class="px-4 py-3 rounded-r-lg text-right">Invoice</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ledgerTableBody" class="divide-y divide-slate-800">
+                                <!-- Dynamic Ledger fill -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: CLOUDFLARE D1 CONSOLE -->
+            <section id="tab-sqlconsole" class="tab-page space-y-6 hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Cloudflare D1 SQL Console</h2>
+                        <p class="text-xs text-slate-400">Interactive browser SQL execution engine with full D1 API interface.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="btnResetDB" class="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-semibold px-3 py-1.5 rounded-xl text-xs border border-rose-500/30 transition-all">
+                            <i class="fa-solid fa-rotate-left"></i> Reset Seed Data
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <!-- Database Schema Viewer -->
+                    <div class="glass-panel p-4 rounded-2xl space-y-3">
+                        <h3 class="font-bold text-slate-200 text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-sitemap text-purple-400"></i> Schema Explorer
+                        </h3>
+                        <div id="schemaTree" class="space-y-2 text-xs font-mono text-slate-300">
+                            <!-- Dynamic Schema List -->
+                        </div>
+                    </div>
+
+                    <!-- SQL Editor & Output -->
+                    <div class="glass-panel p-5 rounded-2xl lg:col-span-3 space-y-4">
+                        <div class="space-y-2">
+                            <label class="text-xs font-medium text-slate-400 flex items-center justify-between">
+                                <span>SQL Query Console</span>
+                                <span class="text-amber-400 font-mono">SQLite / Cloudflare D1 Engine</span>
+                            </label>
+                            <textarea id="sqlQueryInput" rows="4" class="w-full bg-slate-950 font-mono text-sm text-emerald-400 p-3 rounded-xl border border-slate-800 focus:outline-none focus:border-purple-500" placeholder="SELECT * FROM rooms WHERE status = 'Available';"></textarea>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <div class="flex gap-2">
+                                <button id="btnRunSQL" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 py-2 rounded-xl text-sm transition-all flex items-center gap-2">
+                                    <i class="fa-solid fa-play"></i> Run Query
+                                </button>
+                                <button id="btnQuickSelect" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium px-3 py-2 rounded-xl text-xs transition-all">
+                                    Sample Query
+                                </button>
+                            </div>
+                            <span id="queryExecTime" class="text-xs text-slate-500">Execution time: 0ms</span>
+                        </div>
+
+                        <!-- Query Output Table / Message -->
+                        <div class="space-y-2">
+                            <h4 class="text-xs font-semibold text-slate-400 uppercase">Query Output Results</h4>
+                            <div id="sqlOutputContainer" class="bg-slate-950 rounded-xl p-4 font-mono text-xs overflow-x-auto min-h-[150px] max-h-[300px] border border-slate-800">
+                                <span class="text-slate-500">// Results will be displayed here...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 6: PROMOTIONS & JIMMA TOURS -->
+            <section id="tab-promotions" class="tab-page space-y-6 hidden">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Jimma Local Attractions & Promotions</h2>
+                    <p class="text-xs text-slate-400">Exclusive tour packages, local heritage trips, and Asni Guest House perks.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="glass-panel rounded-2xl overflow-hidden flex flex-col justify-between border border-amber-500/20">
+                        <div class="p-5 space-y-3">
+                            <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-2xl mb-2">
+                                <i class="fa-solid fa-landmark"></i>
+                            </div>
+                            <h3 class="font-bold text-lg text-white">Jimma Aba Jifar Palace Tour</h3>
+                            <p class="text-xs text-slate-300">
+                                Experience historical royal architecture of the 19th-century King Aba Jifar II palace located in Jiren. Guided shuttle service directly from Asni Guest House.
+                            </p>
+                        </div>
+                        <div class="p-5 bg-slate-900/80 border-t border-slate-800 flex items-center justify-between">
+                            <span class="text-amber-400 font-bold text-sm">850 ETB / person</span>
+                            <button onclick="AsniApp.showToast('Booked Aba Jifar Palace shuttle!')" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-lg text-xs">Book Tour</button>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel rounded-2xl overflow-hidden flex flex-col justify-between border border-emerald-500/20">
+                        <div class="p-5 space-y-3">
+                            <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-2xl mb-2">
+                                <i class="fa-solid fa-mug-hot"></i>
+                            </div>
+                            <h3 class="font-bold text-lg text-white">Authentic Jimma Buna Ceremony</h3>
+                            <p class="text-xs text-slate-300">
+                                Immerse yourself in the traditional Ethiopian coffee ceremony with fresh popcorn (Fendisha) and incense right in our VIP garden terrace.
+                            </p>
+                        </div>
+                        <div class="p-5 bg-slate-900/80 border-t border-slate-800 flex items-center justify-between">
+                            <span class="text-emerald-400 font-bold text-sm">Complimentary for Suites</span>
+                            <button onclick="AsniApp.showToast('Reserved Garden Coffee Ceremony!')" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded-lg text-xs">Reserve Spot</button>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel rounded-2xl overflow-hidden flex flex-col justify-between border border-sky-500/20">
+                        <div class="p-5 space-y-3">
+                            <div class="w-12 h-12 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center text-2xl mb-2">
+                                <i class="fa-solid fa-plane-arrival"></i>
+                            </div>
+                            <h3 class="font-bold text-lg text-white">Jimma Airport Transfer</h3>
+                            <p class="text-xs text-slate-300">
+                                Direct private shuttle pickup and drop-off to Jimma Aba Jifar Airport (JIM). Safe, punctual, and comfortable.
+                            </p>
+                        </div>
+                        <div class="p-5 bg-slate-900/80 border-t border-slate-800 flex items-center justify-between">
+                            <span class="text-sky-400 font-bold text-sm">500 ETB per trip</span>
+                            <button onclick="AsniApp.showToast('Airport Shuttle requested!')" class="px-3 py-1.5 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-lg text-xs">Request Pickup</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL: Check-In Form -->
+    <div id="modalCheckin" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-panel bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl overflow-hidden shadow-2xl">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+                <h3 class="font-bold text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-user-plus text-amber-400"></i> Room Check-In
+                </h3>
+                <button class="close-modal text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="checkinForm" class="p-5 space-y-4">
+                <div>
+                    <label class="text-xs font-medium text-slate-300 block mb-1">Select Room</label>
+                    <select id="checkinRoomId" class="w-full bg-slate-800 border border-slate-700 text-slate-200 text-sm rounded-xl p-2.5 outline-none" required></select>
+                </div>
+                <div>
+                    <label class="text-xs font-medium text-slate-300 block mb-1">Guest Full Name</label>
+                    <input type="text" id="checkinGuestName" class="w-full bg-slate-800 border border-slate-700 text-slate-200 text-sm rounded-xl p-2.5 outline-none" placeholder="e.g. Kifle Tadesse" required>
+                </div>
+                <div>
+                    <label class="text-xs font-medium text-slate-300 block mb-1">Phone Number</label>
+                    <input type="text" id="checkinPhone" class="w-full bg-slate-800 border border-slate-700 text-slate-200 text-sm rounded-xl p-2.5 outline-none" placeholder="+251 91 123 4567" required>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs font-medium text-slate-300 block mb-1">Nights</label>
+                        <input type="number" id="checkinNights" min="1" value="1" class="w-full bg-slate-800 border border-slate-700 text-slate-200 text-sm rounded-xl p-2.5 outline-none" required>
+                    </div>
+                    <div>
+                        <label class="text-xs font-medium text-slate-300 block mb-1">Total (ETB)</label>
+                        <div id="checkinTotalEst" class="w-full bg-slate-950 border border-slate-800 text-amber-400 font-bold text-sm rounded-xl p-2.5">0 ETB</div>
+                    </div>
+                </div>
+                <div class="pt-2 flex gap-3">
+                    <button type="button" class="close-modal flex-1 bg-slate-800 text-slate-300 font-semibold py-2.5 rounded-xl text-sm hover:bg-slate-700">Cancel</button>
+                    <button type="submit" class="flex-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-2.5 rounded-xl text-sm transition-all">Confirm Check-In</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Restaurant Order Cart -->
+    <div id="modalCart" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-panel bg-slate-900 border border-slate-700 w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+                <h3 class="font-bold text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-utensils text-rose-400"></i> Active Table Order
+                </h3>
+                <button class="close-modal text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-5 space-y-4">
+                <div>
+                    <label class="text-xs font-medium text-slate-400 block mb-1">Assign to Table or Room</label>
+                    <select id="orderTableTarget" class="w-full bg-slate-800 border border-slate-700 text-slate-200 text-sm rounded-xl p-2.5 outline-none">
+                        <option value="Table 1">Table 1 (Garden Terrace)</option>
+                        <option value="Table 2">Table 2 (Main Hall)</option>
+                        <option value="Table 3">Table 3 (VIP Room)</option>
+                        <option value="Room 101">Room 101 Service</option>
+                        <option value="Room 102">Room 102 Service</option>
+                    </select>
+                </div>
+
+                <div class="border border-slate-800 rounded-xl p-3 bg-slate-950/50 max-h-48 overflow-y-auto space-y-2" id="cartItemsList">
+                    <!-- Dynamic cart items -->
+                </div>
+
+                <div class="flex items-center justify-between border-t border-slate-800 pt-3">
+                    <span class="text-sm font-semibold text-slate-300">Total Amount:</span>
+                    <span class="text-xl font-bold text-amber-400" id="cartTotalSum">0 ETB</span>
+                </div>
+
+                <div class="pt-2 flex gap-3">
+                    <button type="button" id="btnClearCart" class="bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 font-semibold px-4 py-2.5 rounded-xl text-sm">Clear</button>
+                    <button type="button" id="btnPlaceOrder" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-sm transition-all">Submit Order</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Printable Receipt Modal -->
+    <div id="modalReceipt" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white text-slate-900 w-full max-w-md rounded-2xl overflow-hidden shadow-2xl p-6 space-y-4">
+            <div class="text-center space-y-1 border-b border-slate-200 pb-4">
+                <h2 class="text-2xl font-bold tracking-tight text-amber-700">ASNI GUEST HOUSE</h2>
+                <p class="text-xs text-slate-500">Jimma Ferenj Arada, Ethiopia | Tel: +251 47 111 2233</p>
+                <div class="inline-block bg-slate-100 text-slate-700 text-xs px-2.5 py-0.5 rounded font-mono mt-1">
+                    Receipt #<span id="rcptId">000</span>
+                </div>
+            </div>
+
+            <div class="text-xs space-y-1">
+                <div class="flex justify-between"><span class="text-slate-500">Date:</span> <span id="rcptDate" class="font-medium"></span></div>
+                <div class="flex justify-between"><span class="text-slate-500">Payer / Guest:</span> <span id="rcptPayer" class="font-medium"></span></div>
+                <div class="flex justify-between"><span class="text-slate-500">Transaction Type:</span> <span id="rcptType" class="font-medium"></span></div>
+            </div>
+
+            <div class="border-t border-b border-slate-200 py-3 space-y-2">
+                <div class="text-xs font-semibold text-slate-400 uppercase">Description</div>
+                <div class="text-sm font-medium text-slate-800" id="rcptDesc">Room Charge</div>
+            </div>
+
+            <div class="flex justify-between items-center text-lg font-bold border-b border-slate-200 pb-3">
+                <span>Total Paid:</span>
+                <span id="rcptAmount" class="text-emerald-700">0 ETB</span>
+            </div>
+
+            <div class="text-center text-[10px] text-slate-400 italic">
+                Thank you for staying at Asni Guest House! Ameseginalehu!
+            </div>
+
+            <div class="no-print pt-2 flex gap-3">
+                <button onclick="document.getElementById('modalReceipt').classList.add('hidden')" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold py-2 rounded-xl text-xs">Close</button>
+                <button onclick="window.print()" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 rounded-xl text-xs">Print Receipt</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+    <!-- APPLICATION JAVASCRIPT LOGIC -->
+    <script>
+    /* Asni Guest House App Architecture */
+    const AsniApp = (function() {
+
+        // ==========================================
+        // 1. EMBEDDED SQL ENGINE & DATA STORAGE
+        // ==========================================
+        const DB_KEY = 'asni_guesthouse_db_v1';
+
+        const InitialSeed = {
+            rooms: [
+                { id: 101, room_number: '101', type: 'Standard', rate_etb: 1800, status: 'Occupied', guest_name: 'Kifle Tadesse', floor: 1 },
+                { id: 102, room_number: '102', type: 'Deluxe', rate_etb: 2500, status: 'Occupied', guest_name: 'Tigist Alemu', floor: 1 },
+                { id: 103, room_number: '103', type: 'Standard', rate_etb: 1800, status: 'Available', guest_name: null, floor: 1 },
+                { id: 104, room_number: '104', type: 'Family Suite', rate_etb: 3800, status: 'Available', guest_name: null, floor: 1 },
+                { id: 201, room_number: '201', type: 'Executive Suite', rate_etb: 4500, status: 'Cleaning', guest_name: null, floor: 2 },
+                { id: 202, room_number: '202', type: 'Deluxe', rate_etb: 2500, status: 'Available', guest_name: null, floor: 2 },
+                { id: 203, room_number: '203', type: 'Standard', rate_etb: 1800, status: 'Available', guest_name: null, floor: 2 },
+                { id: 204, room_number: '204', type: 'Executive Suite', rate_etb: 4500, status: 'Available', guest_name: null, floor: 2 }
+            ],
+            bookings: [
+                { id: 1001, guest_name: 'Kifle Tadesse', room_id: 101, checkin: '2026-09-28', checkout: '2026-10-02', total_etb: 7200, status: 'Active' },
+                { id: 1002, guest_name: 'Tigist Alemu', room_id: 102, checkin: '2026-09-29', checkout: '2026-10-01', total_etb: 5000, status: 'Active' }
+            ],
+            menu: [
+                { id: 1, name: 'Special Kitfo', category: 'Ethiopian', price_etb: 450, desc: 'Finely minced fresh beef with mitmita and niter kibbeh.' },
+                { id: 2, name: 'Doro Wat with Enjera', category: 'Ethiopian', price_etb: 500, desc: 'Spicy Ethiopian chicken stew with boiled egg.' },
+                { id: 3, name: 'Shiro Tegabino', category: 'Ethiopian', price_etb: 220, desc: 'Rich chickpea powder stew served piping hot in clay pot.' },
+                { id: 4, name: 'Jimma Buna Coffee', category: 'Beverage', price_etb: 50, desc: 'Freshly roasted authentic Jimma specialty coffee.' },
+                { id: 5, name: 'Fresh Spris Juice', category: 'Beverage', price_etb: 120, desc: 'Layered mango, avocado, and papaya juice.' },
+                { id: 6, name: 'Club Sandwich', category: 'International', price_etb: 320, desc: 'Served with French fries and salad.' }
+            ],
+            orders: [
+                { id: 501, location: 'Table 1', items: 'Special Kitfo x2, Jimma Buna x2', total_etb: 1000, time: '12:30 PM' },
+                { id: 502, location: 'Room 101', items: 'Shiro Tegabino x1, Spris Juice x1', total_etb: 340, time: '01:15 PM' }
+            ],
+            ledger: [
+                { id: 8001, date: '2026-09-28', type: 'Room Payment', desc: '4 Nights Stay Room 101', payer: 'Kifle Tadesse', amount_etb: 7200 },
+                { id: 8002, date: '2026-09-29', type: 'Room Payment', desc: '2 Nights Stay Room 102', payer: 'Tigist Alemu', amount_etb: 5000 },
+                { id: 8003, date: '2026-09-30', type: 'Restaurant POS', desc: 'Order #501 (Table 1)', payer: 'Walk-in Guest', amount_etb: 1000 },
+                { id: 8004, date: '2026-09-30', type: 'Restaurant POS', desc: 'Order #502 (Room 101)', payer: 'Kifle Tadesse', amount_etb: 340 }
+            ]
+        };
+
+        let db = null;
+
+        function initDatabase() {
+            try {
+                const stored = localStorage.getItem(DB_KEY);
+                if (stored) {
+                    db = JSON.parse(stored);
+                } else {
+                    db = JSON.parse(JSON.stringify(InitialSeed));
+                    saveDatabase();
+                }
+            } catch (e) {
+                console.error('Storage error fallback:', e);
+                db = JSON.parse(JSON.stringify(InitialSeed));
+            }
+        }
+
+        function saveDatabase() {
+            try {
+                localStorage.setItem(DB_KEY, JSON.stringify(db));
+            } catch(e) { console.error('Failed saving db:', e); }
+        }
+
+        // Simulates Cloudflare D1 / SQL execution query
+        function executeSQLQuery(queryStr) {
+            const clean = queryStr.trim().toLowerCase();
+            const start = performance.now();
+
+            try {
+                if (clean.startsWith('select * from rooms')) {
+                    if (clean.includes("where status = 'available'")) {
+                        const res = db.rooms.filter(r => r.status === 'Available');
+                        return { success: true, rows: res, duration: performance.now() - start };
+                    }
+                    return { success: true, rows: db.rooms, duration: performance.now() - start };
+                } 
+                else if (clean.startsWith('select * from bookings')) {
+                    return { success: true, rows: db.bookings, duration: performance.now() - start };
+                }
+                else if (clean.startsWith('select * from menu')) {
+                    return { success: true, rows: db.menu, duration: performance.now() - start };
+                }
+                else if (clean.startsWith('select * from ledger')) {
+                    return { success: true, rows: db.ledger, duration: performance.now() - start };
+                }
+                else {
+                    // Fallback query emulation response
+                    return { 
+                        success: true, 
+                        rows: [{ info: "Query executed successfully on Cloudflare D1 emulation engine.", sql: queryStr }], 
+                        duration: performance.now() - start 
+                    };
+                }
+            } catch (err) {
+                return { success: false, error: err.message, duration: performance.now() - start };
+            }
+        }
+
+        // ==========================================
+        // 2. STATE & UI HANDLERS
+        // ==========================================
+        let currentRole = 'Admin';
+        let activeCart = [];
+        let revenueChartInstance = null;
+        let categoryChartInstance = null;
+
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            if(!container) return;
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto px-4 py-3 rounded-xl text-xs font-semibold shadow-xl border flex items-center gap-2 transform transition-all duration-300 translate-y-2 ${
+                type === 'success' 
+                    ? 'bg-emerald-900/90 border-emerald-500/50 text-emerald-200' 
+                    : 'bg-rose-900/90 border-rose-500/50 text-rose-200'
+            }`;
+            toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check text-emerald-400' : 'fa-triangle-exclamation text-rose-400'}"></i> ${msg}`;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.remove('translate-y-2'), 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function updateRolePrivileges(role) {
+            currentRole = role;
+            const adminBtns = document.querySelectorAll('.font-admin-only');
+            adminBtns.forEach(btn => {
+                btn.style.display = (role === 'Guest') ? 'none' : 'flex';
+            });
+            showToast(`Switched perspective to: ${role}`);
+        }
+
+        // ==========================================
+        // 3. RENDER FUNCTIONS
+        // ==========================================
+        function renderDashboard() {
+            // Calculate metrics
+            const occupiedRooms = db.rooms.filter(r => r.status === 'Occupied').length;
+            const totalRooms = db.rooms.length;
+            const occupancyRate = Math.round((occupiedRooms / totalRooms) * 100);
+
+            const totalRevenue = db.ledger.reduce((acc, curr) => acc + curr.amount_etb, 0);
+            const diningRevenue = db.ledger
+                .filter(l => l.type === 'Restaurant POS')
+                .reduce((acc, curr) => acc + curr.amount_etb, 0);
+
+            document.getElementById('kpiRevenue').textContent = `${totalRevenue.toLocaleString()} ETB`;
+            document.getElementById('kpiOccupancy').textContent = `${occupancyRate}%`;
+            document.getElementById('kpiOccupancySub').textContent = `${occupiedRooms} / ${totalRooms} Rooms occupied`;
+            document.getElementById('kpiGuests').textContent = occupiedRooms.toString();
+            document.getElementById('kpiOrders').textContent = db.orders.length.toString();
+            document.getElementById('kpiDiningRevenue').textContent = `${diningRevenue.toLocaleString()} ETB dining`;
+
+            renderCharts(occupancyRate);
+        }
+
+        function renderCharts(occupancyRate) {
+            // Revenue Chart
+            const ctxRev = document.getElementById('revenueChart');
+            if (ctxRev && window.Chart) {
+                if (revenueChartInstance) revenueChartInstance.destroy();
+                revenueChartInstance = new Chart(ctxRev, {
+                    type: 'line',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [{
+                            label: 'Revenue (ETB)',
+                            data: [4200, 5800, 7200, 6100, 9500, 11200, 13540],
+                            borderColor: '#10B981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94A3B8' } },
+                            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94A3B8' } }
+                        }
+                    }
+                });
+            }
+
+            // Category Chart
+            const ctxCat = document.getElementById('categoryChart');
+            if (ctxCat && window.Chart) {
+                if (categoryChartInstance) categoryChartInstance.destroy();
+                categoryChartInstance = new Chart(ctxCat, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Standard', 'Deluxe', 'Family Suite', 'Executive'],
+                        datasets: [{
+                            data: [3, 2, 1, 2],
+                            backgroundColor: ['#F59E0B', '#10B981', '#3B82F6', '#8B5CF6']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { color: '#94A3B8', boxWidth: 12 } } }
+                    }
+                });
+            }
+        }
+
+        function renderFrontDesk() {
+            const grid = document.getElementById('roomGrid');
+            const filter = document.getElementById('roomFilter').value;
+            grid.innerHTML = '';
+
+            const filteredRooms = db.rooms.filter(r => filter === 'ALL' || r.status === filter);
+
+            filteredRooms.forEach(room => {
+                const isOccupied = room.status === 'Occupied';
+                const isCleaning = room.status === 'Cleaning';
+                const statusBg = isOccupied ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 
+                                 isCleaning ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 
+                                 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+
+                const card = document.createElement('div');
+                card.className = 'glass-panel p-4 rounded-2xl flex flex-col justify-between space-y-3';
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-400">Floor ${room.floor}</span>
+                        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold border ${statusBg}">${room.status}</span>
+                    </div>
+                    <div>
+                        <h4 class="text-xl font-bold text-white">Room ${room.room_number}</h4>
+                        <p class="text-xs text-slate-400">${room.type}</p>
+                    </div>
+                    <div class="pt-2 border-t border-slate-800 flex items-center justify-between">
+                        <span class="text-sm font-bold text-amber-400">${room.rate_etb} ETB <span class="text-[10px] text-slate-500 font-normal">/night</span></span>
+                        ${isOccupied ? 
+                            `<button onclick="AsniApp.checkoutRoom(${room.id})" class="px-2.5 py-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-semibold rounded-lg text-xs">Check Out</button>` :
+                            `<button onclick="AsniApp.openCheckinModal(${room.id})" class="px-2.5 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-semibold rounded-lg text-xs">Check In</button>`
+                        }
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            // Render Bookings Table
+            const tbody = document.getElementById('bookingsTableBody');
+            tbody.innerHTML = '';
+            db.bookings.forEach(b => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-4 py-3 font-semibold text-slate-200">${b.guest_name}</td>
+                    <td class="px-4 py-3">Room ${b.room_id}</td>
+                    <td class="px-4 py-3 text-xs text-slate-400">${b.checkin}</td>
+                    <td class="px-4 py-3 text-xs text-slate-400">${b.checkout}</td>
+                    <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">${b.status}</span></td>
+                    <td class="px-4 py-3 font-bold text-amber-400">${b.total_etb} ETB</td>
+                    <td class="px-4 py-3 text-right">
+                        <button onclick="AsniApp.printInvoice('${b.guest_name}', 'Room Stay (${b.room_id})', ${b.total_etb})" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg">Receipt</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderDining() {
+            // Render Tables Map
+            const tablesGrid = document.getElementById('diningTablesGrid');
+            tablesGrid.innerHTML = '';
+            ['Table 1', 'Table 2', 'Table 3', 'Table 4', 'Table 5', 'VIP Terrace'].forEach(tbl => {
+                const btn = document.createElement('button');
+                btn.className = 'glass-card p-3 rounded-xl text-center hover:border-rose-500/50 transition-all text-xs font-semibold text-slate-200 flex flex-col items-center gap-1';
+                btn.innerHTML = `<i class="fa-solid fa-chair text-rose-400 text-base"></i> ${tbl}`;
+                btn.onclick = () => showToast(`Selected ${tbl} for dining.`);
+                tablesGrid.appendChild(btn);
+            });
+
+            // Render Menu Catalog
+            const menuGrid = document.getElementById('menuCatalogGrid');
+            menuGrid.innerHTML = '';
+            db.menu.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'glass-panel p-4 rounded-2xl flex justify-between gap-3 items-center';
+                card.innerHTML = `
+                    <div class="space-y-1">
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">${item.category}</span>
+                        <h4 class="font-bold text-slate-100 text-sm">${item.name}</h4>
+                        <p class="text-xs text-slate-400 line-clamp-1">${item.desc}</p>
+                        <div class="text-amber-400 font-bold text-xs pt-1">${item.price_etb} ETB</div>
+                    </div>
+                    <button onclick="AsniApp.addToCart(${item.id})" class="w-9 h-9 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 flex items-center justify-center font-bold text-sm shrink-0">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                `;
+                menuGrid.appendChild(card);
+            });
+        }
+
+        function renderLedger() {
+            const tbody = document.getElementById('ledgerTableBody');
+            tbody.innerHTML = '';
+            db.ledger.forEach(l => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-4 py-3 font-mono text-xs text-slate-400">#${l.id}</td>
+                    <td class="px-4 py-3 text-xs text-slate-400">${l.date}</td>
+                    <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20">${l.type}</span></td>
+                    <td class="px-4 py-3 text-slate-200 text-xs font-medium">${l.desc}</td>
+                    <td class="px-4 py-3 text-xs text-slate-300">${l.payer}</td>
+                    <td class="px-4 py-3 font-bold text-emerald-400">${l.amount_etb.toLocaleString()} ETB</td>
+                    <td class="px-4 py-3 text-right">
+                        <button onclick="AsniApp.printInvoice('${l.payer}', '${l.desc}', ${l.amount_etb})" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg">
+                            <i class="fa-solid fa-print"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderSQLSchema() {
+            const tree = document.getElementById('schemaTree');
+            tree.innerHTML = `
+                <div class="space-y-1">
+                    <div class="font-bold text-purple-400"><i class="fa-solid fa-database"></i> asni_d1_database</div>
+                    <div class="pl-4 space-y-0.5 text-slate-400">
+                        <div>📁 rooms (${db.rooms.length} records)</div>
+                        <div>📁 bookings (${db.bookings.length} records)</div>
+                        <div>📁 menu (${db.menu.length} records)</div>
+                        <div>📁 orders (${db.orders.length} records)</div>
+                        <div>📁 ledger (${db.ledger.length} records)</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ==========================================
+        // 4. ACTION CONTROLLERS
+        // ==========================================
+        function openCheckinModal(roomId = null) {
+            const select = document.getElementById('checkinRoomId');
+            select.innerHTML = '';
+            
+            db.rooms.filter(r => r.status === 'Available').forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = r.id;
+                opt.textContent = `Room ${r.room_number} (${r.type} - ${r.rate_etb} ETB)`;
+                select.appendChild(opt);
+            });
+
+            if (roomId) select.value = roomId;
+
+            document.getElementById('modalCheckin').classList.remove('hidden');
+        }
+
+        function handleCheckinSubmit(e) {
+            e.preventDefault();
+            const roomId = parseInt(document.getElementById('checkinRoomId').value);
+            const name = document.getElementById('checkinGuestName').value;
+            const nights = parseInt(document.getElementById('checkinNights').value) || 1;
+
+            const room = db.rooms.find(r => r.id === roomId);
+            if(!room) return;
+
+            const total = room.rate_etb * nights;
+
+            // Update state
+            room.status = 'Occupied';
+            room.guest_name = name;
+
+            const newBooking = {
+                id: Date.now(),
+                guest_name: name,
+                room_id: room.room_number,
+                checkin: new Date().toISOString().split('T')[0],
+                checkout: '2026-10-05',
+                total_etb: total,
+                status: 'Active'
+            };
+            db.bookings.push(newBooking);
+
+            // Add ledger entry
+            db.ledger.unshift({
+                id: Math.floor(1000 + Math.random() * 9000),
+                date: new Date().toISOString().split('T')[0],
+                type: 'Room Payment',
+                desc: `${nights} Night(s) Stay Room ${room.room_number}`,
+                payer: name,
+                amount_etb: total
+            });
+
+            saveDatabase();
+            document.getElementById('modalCheckin').classList.add('hidden');
+            showToast(`Successfully checked in ${name} to Room ${room.room_number}!`);
+            
+            renderDashboard();
+            renderFrontDesk();
+            renderLedger();
+        }
+
+        function checkoutRoom(roomId) {
+            const room = db.rooms.find(r => r.id === roomId);
+            if(!room) return;
+
+            room.status = 'Cleaning';
+            room.guest_name = null;
+
+            saveDatabase();
+            showToast(`Room ${room.room_number} checked out & set to cleaning.`);
+            renderDashboard();
+            renderFrontDesk();
+        }
+
+        function addToCart(itemId) {
+            const item = db.menu.find(m => m.id === itemId);
+            if(!item) return;
+
+            activeCart.push(item);
+            document.getElementById('cartCount').textContent = activeCart.length.toString();
+            showToast(`Added ${item.name} to order.`);
+        }
+
+        function renderCartModal() {
+            const list = document.getElementById('cartItemsList');
+            list.innerHTML = '';
+
+            if (activeCart.length === 0) {
+                list.innerHTML = `<div class="text-center text-slate-500 py-4 text-xs">Order cart is currently empty.</div>`;
+            } else {
+                let total = 0;
+                activeCart.forEach((item, index) => {
+                    total += item.price_etb;
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center justify-between text-xs py-1 border-b border-slate-800/50';
+                    div.innerHTML = `
+                        <span class="text-slate-200 font-medium">${item.name}</span>
+                        <div class="flex items-center gap-3">
+                            <span class="text-amber-400 font-bold">${item.price_etb} ETB</span>
+                            <button onclick="AsniApp.removeFromCart(${index})" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+                document.getElementById('cartTotalSum').textContent = `${total} ETB`;
+            }
+
+            document.getElementById('modalCart').classList.remove('hidden');
+        }
+
+        function removeFromCart(index) {
+            activeCart.splice(index, 1);
+            document.getElementById('cartCount').textContent = activeCart.length.toString();
+            renderCartModal();
+        }
+
+        function submitOrder() {
+            if (activeCart.length === 0) {
+                showToast('Cart is empty!', 'error');
+                return;
+            }
+
+            const location = document.getElementById('orderTableTarget').value;
+            const total = activeCart.reduce((sum, i) => sum + i.price_etb, 0);
+            const itemNames = activeCart.map(i => i.name).join(', ');
+
+            db.orders.push({
+                id: Date.now(),
+                location: location,
+                items: itemNames,
+                total_etb: total,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            });
+
+            db.ledger.unshift({
+                id: Math.floor(1000 + Math.random() * 9000),
+                date: new Date().toISOString().split('T')[0],
+                type: 'Restaurant POS',
+                desc: `Dining Order (${location})`,
+                payer: 'Guest',
+                amount_etb: total
+            });
+
+            activeCart = [];
+            document.getElementById('cartCount').textContent = '0';
+            saveDatabase();
+
+            document.getElementById('modalCart').classList.add('hidden');
+            showToast(`Dining order placed for ${location}!`);
+            
+            renderDashboard();
+            renderLedger();
+        }
+
+        function printInvoice(payer, desc, amount) {
+            document.getElementById('rcptId').textContent = Math.floor(100000 + Math.random() * 900000);
+            document.getElementById('rcptDate').textContent = new Date().toLocaleDateString();
+            document.getElementById('rcptPayer').textContent = payer;
+            document.getElementById('rcptType').textContent = 'Payment Completed';
+            document.getElementById('rcptDesc').textContent = desc;
+            document.getElementById('rcptAmount').textContent = `${amount.toLocaleString()} ETB`;
+
+            document.getElementById('modalReceipt').classList.remove('hidden');
+        }
+
+        function exportCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,ID,Date,Type,Description,Payer,Amount_ETB\n";
+            db.ledger.forEach(row => {
+                csvContent += `${row.id},${row.date},${row.type},"${row.desc}",${row.payer},${row.amount_etb}\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Asni_Guest_House_Ledger_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            showToast('Exported transaction ledger CSV!');
+        }
+
+        // ==========================================
+        // 5. EVENT LISTENERS & SETUP
+        // ==========================================
+        function setupEventListeners() {
+            // Sidebar Navigation Tabs
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active', 'bg-slate-800', 'text-white'));
+                    btn.classList.add('active', 'bg-slate-800', 'text-white');
+
+                    const tabId = btn.getAttribute('data-tab');
+                    document.querySelectorAll('.tab-page').forEach(page => page.classList.add('hidden'));
+                    document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+                    if (window.innerWidth < 768) {
+                        document.getElementById('sidebar').classList.add('-translate-x-full');
+                    }
+                });
+            });
+
+            // Mobile Menu toggle
+            document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+                document.getElementById('sidebar').classList.toggle('-translate-x-full');
+            });
+
+            // Role select
+            document.getElementById('roleSelect').addEventListener('change', (e) => {
+                updateRolePrivileges(e.target.value);
+            });
+
+            // Modals close buttons
+            document.querySelectorAll('.close-modal').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.fixed').forEach(m => {
+                        if (m.id !== 'toastContainer') m.classList.add('hidden');
+                    });
+                });
+            });
+
+            // Check-in
+            document.getElementById('btnNewCheckin').addEventListener('click', () => openCheckinModal());
+            document.getElementById('checkinForm').addEventListener('submit', handleCheckinSubmit);
+
+            // Filter Room Grid
+            document.getElementById('roomFilter').addEventListener('change', renderFrontDesk);
+
+            // Cart & Dining
+            document.getElementById('btnViewCart').addEventListener('click', renderCartModal);
+            document.getElementById('btnClearCart').addEventListener('click', () => {
+                activeCart = [];
+                document.getElementById('cartCount').textContent = '0';
+                renderCartModal();
+            });
+            document.getElementById('btnPlaceOrder').addEventListener('click', submitOrder);
+
+            // Menu Filter buttons
+            document.querySelectorAll('.menu-cat-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.menu-cat-btn').forEach(b => {
+                        b.classList.remove('bg-amber-500', 'text-slate-950', 'font-bold');
+                        b.classList.add('bg-slate-800', 'text-slate-300');
+                    });
+                    e.target.classList.remove('bg-slate-800', 'text-slate-300');
+                    e.target.classList.add('bg-amber-500', 'text-slate-950', 'font-bold');
+
+                    const cat = e.target.getAttribute('data-category');
+                    const menuGrid = document.getElementById('menuCatalogGrid');
+                    menuGrid.innerHTML = '';
+                    
+                    db.menu.filter(m => cat === 'ALL' || m.category === cat).forEach(item => {
+                        const card = document.createElement('div');
+                        card.className = 'glass-panel p-4 rounded-2xl flex justify-between gap-3 items-center';
+                        card.innerHTML = `
+                            <div class="space-y-1">
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">${item.category}</span>
+                                <h4 class="font-bold text-slate-100 text-sm">${item.name}</h4>
+                                <p class="text-xs text-slate-400 line-clamp-1">${item.desc}</p>
+                                <div class="text-amber-400 font-bold text-xs pt-1">${item.price_etb} ETB</div>
+                            </div>
+                            <button onclick="AsniApp.addToCart(${item.id})" class="w-9 h-9 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 flex items-center justify-center font-bold text-sm shrink-0">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        `;
+                        menuGrid.appendChild(card);
+                    });
+                });
+            });
+
+            // Export CSV
+            document.getElementById('btnExportCSV').addEventListener('click', exportCSV);
+
+            // SQL Console execute
+            document.getElementById('btnRunSQL').addEventListener('click', () => {
+                const query = document.getElementById('sqlQueryInput').value;
+                const result = executeSQLQuery(query);
+                const output = document.getElementById('sqlOutputContainer');
+                document.getElementById('queryExecTime').textContent = `Execution time: ${result.duration.toFixed(2)}ms`;
+
+                if (result.success) {
+                    output.innerHTML = `<pre class="text-emerald-400">${JSON.stringify(result.rows, null, 2)}</pre>`;
+                } else {
+                    output.innerHTML = `<span class="text-rose-400">Error: ${result.error}</span>`;
+                }
+            });
+
+            document.getElementById('btnQuickSelect').addEventListener('click', () => {
+                document.getElementById('sqlQueryInput').value = "SELECT * FROM rooms WHERE status = 'Available';";
+            });
+
+            document.getElementById('btnResetDB').addEventListener('click', () => {
+                localStorage.removeItem(DB_KEY);
+                initDatabase();
+                renderDashboard();
+                renderFrontDesk();
+                renderDining();
+                renderLedger();
+                renderSQLSchema();
+                showToast('Reset database to original seed state!');
+            });
+        }
+
+        // Public Exports
+        return {
+            init: function() {
+                initDatabase();
+                setupEventListeners();
+                renderDashboard();
+                renderFrontDesk();
+                renderDining();
+                renderLedger();
+                renderSQLSchema();
+            },
+            showToast,
+            openCheckinModal,
+            checkoutRoom,
+            addToCart,
+            removeFromCart,
+            printInvoice
+        };
+    })();
+
+    // Initialize application on page load
+    window.onload = function() {
+        AsniApp.init();
+    };
+    </script>
+</body>
+</html>
